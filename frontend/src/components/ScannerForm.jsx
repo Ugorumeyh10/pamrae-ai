@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Upload, Search, Loader2, FileText } from 'lucide-react'
+import { motion } from 'framer-motion'
 import axios from 'axios'
 import API_URL from '../config'
 
@@ -190,7 +191,7 @@ function ScannerForm({ onScan, loading }) {
           )}
         </button>
       </form>
-    </div>
+    </motion.div>
   )
 }
 
