@@ -55,7 +55,25 @@ function ScannerForm({ onScan, loading }) {
       onScan(response.data)
     } catch (error) {
       console.error('Scan error:', error)
-      alert(error.response?.data?.detail || 'Failed to scan contract. Please try again.')
+      let errorMessage = 'Failed to scan contract. Please try again.'
+      
+      if (error.response?.data) {
+        if (typeof error.response.data.detail === 'string') {
+          errorMessage = error.response.data.detail
+        } else if (typeof error.response.data.detail === 'object') {
+          errorMessage = JSON.stringify(error.response.data.detail)
+        } else if (typeof error.response.data.message === 'string') {
+          errorMessage = error.response.data.message
+        } else if (error.response.data.error) {
+          errorMessage = typeof error.response.data.error === 'string' 
+            ? error.response.data.error 
+            : JSON.stringify(error.response.data.error)
+        }
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      alert(errorMessage)
     }
   }
 

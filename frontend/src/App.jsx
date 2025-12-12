@@ -57,7 +57,25 @@ function App() {
     try {
       setScanResults(scanData)
     } catch (err) {
-      setError(err.message)
+      let errorMessage = 'An error occurred'
+      
+      if (err.response?.data) {
+        if (typeof err.response.data.detail === 'string') {
+          errorMessage = err.response.data.detail
+        } else if (typeof err.response.data.detail === 'object') {
+          errorMessage = JSON.stringify(err.response.data.detail)
+        } else if (typeof err.response.data.message === 'string') {
+          errorMessage = err.response.data.message
+        } else if (err.response.data.error) {
+          errorMessage = typeof err.response.data.error === 'string' 
+            ? err.response.data.error 
+            : JSON.stringify(err.response.data.error)
+        }
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+      
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }

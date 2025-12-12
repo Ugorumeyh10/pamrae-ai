@@ -199,7 +199,25 @@ function Pricing({ user, onPaymentSuccess }) {
       }
     } catch (error) {
       console.error('Payment error:', error)
-      setPaymentError(error.response?.data?.detail || 'Payment failed. Please try again.')
+      let errorMessage = 'Payment failed. Please try again.'
+      
+      if (error.response?.data) {
+        if (typeof error.response.data.detail === 'string') {
+          errorMessage = error.response.data.detail
+        } else if (typeof error.response.data.detail === 'object') {
+          errorMessage = JSON.stringify(error.response.data.detail)
+        } else if (typeof error.response.data.message === 'string') {
+          errorMessage = error.response.data.message
+        } else if (error.response.data.error) {
+          errorMessage = typeof error.response.data.error === 'string' 
+            ? error.response.data.error 
+            : JSON.stringify(error.response.data.error)
+        }
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      setPaymentError(errorMessage)
     } finally {
       setProcessingPayment(null)
     }
