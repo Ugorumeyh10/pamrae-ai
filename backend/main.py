@@ -27,10 +27,9 @@ app = FastAPI(title="Pamrae AI - Smart Contract Security Scanner API", version="
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "https://pamrae-ai.vercel.app",  # Production frontend
         "http://localhost:3000",
         "http://localhost:5173",  # Vite default port
-        # Add your Vercel frontend URL here after deployment
-        # "https://your-app.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
