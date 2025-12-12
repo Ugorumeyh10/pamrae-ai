@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-black text-white min-h-screen;
+    background-image: 
+      radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
+      radial-gradient(circle at 40% 20%, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
+    animation: backgroundShift 20s ease-in-out infinite;
+  }
+  
+  @keyframes backgroundShift {
+    0%, 100% { background-position: 0% 0%, 100% 100%, 50% 50%; }
+    50% { background-position: 10% 10%, 90% 90%, 60% 40%; }
+  }
+}
+
+@layer components {
+  .glass-effect {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
+    box-shadow: 
+      0 8px 32px 0 rgba(0, 0, 0, 0.37),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-to-r from-white via-gray-200 to-white bg-clip-text text-transparent;
+    text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+  }
+  
+  .gold-text {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
+  }
+  
+  .gold-glow {
+    box-shadow: 
+      0 0 20px rgba(255, 215, 0, 0.3),
+      0 0 40px rgba(255, 215, 0, 0.2),
+      inset 0 0 20px rgba(255, 215, 0, 0.1);
+  }
+  
+  .card-hover {
+    @apply transition-all duration-500 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)] hover:-translate-y-2 hover:scale-[1.02];
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .card-hover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s;
+  }
+  
+  .card-hover:hover::before {
+    left: 100%;
+  }
+  
+  .glow-effect {
+    box-shadow: 
+      0 0 20px rgba(255, 255, 255, 0.1),
+      0 0 40px rgba(255, 255, 255, 0.05),
+      inset 0 0 20px rgba(255, 255, 255, 0.05);
+  }
+  
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  
+  .pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+  
+  @keyframes pulseGlow {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+    }
+    50% {
+      box-shadow: 0 0 40px rgba(255, 255, 255, 0.2);
+    }
+  }
+  
+  .border-glow {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+      0 0 10px rgba(255, 255, 255, 0.1),
+      inset 0 0 10px rgba(255, 255, 255, 0.05);
+  }
+  
+  .text-glow {
+    text-shadow: 
+      0 0 10px rgba(255, 255, 255, 0.5),
+      0 0 20px rgba(255, 255, 255, 0.3),
+      0 0 30px rgba(255, 255, 255, 0.1);
+  }
+}
+

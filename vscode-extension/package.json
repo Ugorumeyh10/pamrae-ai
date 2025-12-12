@@ -1,0 +1,58 @@
+{
+  "name": "contract-security-scanner",
+  "displayName": "Contract Security Scanner",
+  "description": "Scan Solidity contracts for security vulnerabilities",
+  "version": "1.0.0",
+  "publisher": "contract-scanner",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:solidity"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "contractScanner.scan",
+        "title": "Scan Contract Security"
+      },
+      {
+        "command": "contractScanner.scanFile",
+        "title": "Scan Current File"
+      }
+    ],
+    "configuration": {
+      "title": "Contract Scanner",
+      "properties": {
+        "contractScanner.apiUrl": {
+          "type": "string",
+          "default": "http://localhost:8000",
+          "description": "API base URL"
+        },
+        "contractScanner.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for authentication"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "^18.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}
+

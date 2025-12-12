@@ -1,0 +1,102 @@
+name: Contract Security Scan
+
+on:
+  pull_request:
+    paths:
+      - '**.sol'
+      - 'contracts/**'
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - '**.sol'
+      - 'contracts/**'
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Find Solidity files
+        id: find-files
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            function findSolFiles(dir, fileList = []) {
+              const files = fs.readdirSync(dir);
+              
+              files.forEach(file => {
+                const filePath = path.join(dir, file);
+                const stat = fs.statSync(filePath);
+                
+                if (stat.isDirectory() && !filePath.includes('node_modules')) {
+                  findSolFiles(filePath, fileList);
+                } else if (file.endsWith('.sol')) {
+                  fileList.push(filePath);
+                }
+              });
+              
+              return fileList;
+            }
+            
+            const solFiles = findSolFiles('.');
+            core.setOutput('files', JSON.stringify(solFiles));
+      
+      - name: Scan contracts
+        id: scan
+        run: |
+          API_URL="${{ secrets.CONTRACT_SCANNER_API_URL || 'http://localhost:8000' }}"
+          API_KEY="${{ secrets.CONTRACT_SCANNER_API_KEY }}"
+          
+          FILES='${{ steps.find-files.outputs.files }}'
+          
+          echo "Found Solidity files: $FILES"
+          
+          for file in $(echo $FILES | jq -r '.[]'); do
+            echo "Scanning $file..."
+            
+            RESPONSE=$(curl -s -X POST "$API_URL/api/v1/upload" \
+              -H "Content-Type: multipart/form-data" \
+              -H "X-API-Key: $API_KEY" \
+              -F "file=@$file" \
+              -F "chain=ethereum")
+            
+            SCORE=$(echo $RESPONSE | jq -r '.safety_score // 0')
+            VULNS=$(echo $RESPONSE | jq -r '.vulnerabilities | length // 0')
+            
+            echo "::warning file=$file::Safety Score: $SCORE, Vulnerabilities: $VULNS"
+            
+            if [ "$SCORE" -lt 50 ]; then
+              echo "::error file=$file::Contract has low safety score ($SCORE)"
+              exit 1
+            fi
+          done
+      
+      - name: Comment PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const files = JSON.parse('${{ steps.find-files.outputs.files }}');
+            
+            let comment = '## 🔒 Contract Security Scan Results\n\n';
+            
+            for (const file of files) {
+              // Add scan results for each file
+              comment += `### ${file}\n`;
+              comment += `- Scanned successfully\n\n`;
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
