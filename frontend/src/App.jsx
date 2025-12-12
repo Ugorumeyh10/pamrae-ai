@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Shield, AlertTriangle, CheckCircle, FileText, Upload, Search, Loader2, Layers, History, CreditCard, User, LogOut } from 'lucide-react'
+import { motion } from 'framer-motion'
 import ScannerForm from './components/ScannerForm'
 import ResultsDisplay from './components/ResultsDisplay'
 import Header from './components/Header'
