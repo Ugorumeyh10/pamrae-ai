@@ -38,8 +38,8 @@ function Login({ onLogin, onSwitchToSignup }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4">
-      <div className="glass-effect rounded-2xl p-8 w-full max-w-md border-glow relative overflow-hidden group">
+    <div className="min-h-screen flex items-center justify-center py-8 md:py-12 px-4">
+      <div className="glass-effect rounded-2xl p-6 md:p-8 w-full max-w-md border-glow relative overflow-hidden group">
         <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
         
         <div className="relative z-10">

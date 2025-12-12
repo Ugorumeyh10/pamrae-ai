@@ -206,7 +206,7 @@ function Pricing({ user, onPaymentSuccess }) {
   }
 
   return (
-    <div className="min-h-screen py-16">
+    <div className="min-h-screen py-8 md:py-16">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-12">
@@ -283,7 +283,7 @@ function Pricing({ user, onPaymentSuccess }) {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-7xl mx-auto">
           {plans.map((plan, index) => {
             const Icon = plan.icon
             const isPopular = plan.popular

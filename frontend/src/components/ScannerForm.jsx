@@ -59,7 +59,12 @@ function ScannerForm({ onScan, loading }) {
   }
 
   return (
-    <div className="glass-effect rounded-2xl p-8 shadow-2xl border-glow relative overflow-hidden group">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="glass-effect rounded-2xl p-4 md:p-8 shadow-2xl border-glow relative overflow-hidden group"
+    >
       <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
       <div className="flex gap-4 mb-6 relative z-10">
         <button
