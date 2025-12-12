@@ -202,16 +202,24 @@ function Pricing({ user, onPaymentSuccess }) {
       let errorMessage = 'Payment failed. Please try again.'
       
       if (error.response?.data) {
-        if (typeof error.response.data.detail === 'string') {
-          errorMessage = error.response.data.detail
-        } else if (typeof error.response.data.detail === 'object') {
-          errorMessage = JSON.stringify(error.response.data.detail)
-        } else if (typeof error.response.data.message === 'string') {
-          errorMessage = error.response.data.message
-        } else if (error.response.data.error) {
-          errorMessage = typeof error.response.data.error === 'string' 
-            ? error.response.data.error 
-            : JSON.stringify(error.response.data.error)
+        const data = error.response.data
+        
+        // Handle rate limit errors specifically
+        if (data.error === 'Rate limit exceeded' || data.error?.includes('Rate limit')) {
+          const resetTime = data.reset_time ? new Date(data.reset_time).toLocaleTimeString() : 'soon'
+          errorMessage = `⏱️ Rate limit exceeded (${data.tier || 'free'} tier)\n\n${data.reason || 'You've reached your hourly limit'}\n\nLimit resets at: ${resetTime}\n\n💡 Upgrade your plan for higher limits!`
+        }
+        // Handle other error formats
+        else if (typeof data.detail === 'string') {
+          errorMessage = data.detail
+        } else if (typeof data.detail === 'object') {
+          errorMessage = JSON.stringify(data.detail)
+        } else if (typeof data.message === 'string') {
+          errorMessage = data.message
+        } else if (data.error) {
+          errorMessage = typeof data.error === 'string' 
+            ? data.error 
+            : JSON.stringify(data.error)
         }
       } else if (error.message) {
         errorMessage = error.message
