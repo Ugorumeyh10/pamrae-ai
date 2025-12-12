@@ -207,7 +207,9 @@ function Pricing({ user, onPaymentSuccess }) {
         // Handle rate limit errors specifically
         if (data.error === 'Rate limit exceeded' || data.error?.includes('Rate limit')) {
           const resetTime = data.reset_time ? new Date(data.reset_time).toLocaleTimeString() : 'soon'
-          errorMessage = `⏱️ Rate limit exceeded (${data.tier || 'free'} tier)\n\n${data.reason || 'You've reached your hourly limit'}\n\nLimit resets at: ${resetTime}\n\n💡 Upgrade your plan for higher limits!`
+          const tier = data.tier || 'free'
+          const reason = data.reason || 'You\'ve reached your hourly limit'
+          errorMessage = `⏱️ Rate limit exceeded (${tier} tier)\n\n${reason}\n\nLimit resets at: ${resetTime}\n\n💡 Upgrade your plan for higher limits!`
         }
         // Handle other error formats
         else if (typeof data.detail === 'string') {
