@@ -10,8 +10,12 @@ import {
   FileText,
   Info
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
 import axios from 'axios'
+import API_URL from '../config'
+import TokenMetrics from './TokenMetrics'
+import PriceHistory from './PriceHistory'
+import NFTAnalysis from './NFTAnalysis'
+import WalletAnalysis from './WalletAnalysis'
 
 function ResultsDisplay({ results }) {
   const [expandedSections, setExpandedSections] = useState({
@@ -29,35 +33,35 @@ function ResultsDisplay({ results }) {
   }
 
   const getScoreColor = (score) => {
-    if (score >= 80) return 'text-white bg-white/20 border-white/30'
-    if (score >= 50) return 'text-white bg-white/15 border-white/20'
-    return 'text-white bg-white/10 border-white/20'
+    if (score >= 80) return 'bg-green-500/10 border-green-500/30 text-green-400'
+    if (score >= 50) return 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400'
+    return 'bg-red-500/10 border-red-500/30 text-red-400'
   }
 
   const getScoreIcon = (score) => {
-    if (score >= 80) return <CheckCircle className="w-6 h-6 text-white" />
-    if (score >= 50) return <AlertTriangle className="w-6 h-6 text-white" />
-    return <XCircle className="w-6 h-6 text-white" />
+    if (score >= 80) return <CheckCircle className="w-6 h-6" />
+    if (score >= 50) return <AlertTriangle className="w-6 h-6" />
+    return <XCircle className="w-6 h-6" />
   }
 
-  const getSeverityColor = (severity) => {
-    const colors = {
-      high: 'bg-white/20 text-white border-white/30',
-      medium: 'bg-white/15 text-white border-white/25',
-      low: 'bg-white/10 text-white border-white/20',
-      info: 'bg-white/5 text-gray-300 border-white/10'
+  const getSeverityBadge = (severity) => {
+    const styles = {
+      high: 'bg-red-500/10 text-red-400 border-red-500/30',
+      medium: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
+      low: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+      info: 'bg-gray-800 text-gray-400 border-gray-700'
     }
-    return colors[severity] || colors.info
+    return styles[severity] || styles.info
   }
 
-  const getRiskColor = (risk) => {
-    const colors = {
-      severe: 'bg-white/20 text-white border-white/30',
-      high: 'bg-white/15 text-white border-white/25',
-      medium: 'bg-white/10 text-white border-white/20',
-      low: 'bg-white/5 text-gray-300 border-white/10'
+  const getRiskBadge = (risk) => {
+    const styles = {
+      severe: 'bg-red-500/10 text-red-400 border-red-500/30',
+      high: 'bg-red-500/10 text-red-400 border-red-500/30',
+      medium: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
+      low: 'bg-blue-500/10 text-blue-400 border-blue-500/30'
     }
-    return colors[risk] || colors.low
+    return styles[risk] || styles.low
   }
 
   const handleDownloadPDF = async () => {
@@ -67,86 +71,100 @@ function ResultsDisplay({ results }) {
         `${API_URL}/api/v1/report`,
         results,
         { 
-          responseType: 'blob'
+          responseType: 'blob',
+          headers: {
+            'Content-Type': 'application/json'
+          }
         }
       )
       
-      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
       const link = document.createElement('a')
       link.href = url
-      link.setAttribute('download', `security_report_${results.contract_address.slice(0, 10)}.pdf`)
+      link.setAttribute('download', `security_report_${results.contract_address.slice(0, 10)}_${Date.now()}.pdf`)
       document.body.appendChild(link)
       link.click()
       link.remove()
+      window.URL.revokeObjectURL(url)
     } catch (error) {
       console.error('Download error:', error)
-      alert('Failed to download PDF. Please try again.')
+      let errorMessage = 'Failed to download PDF. Please try again.'
+      if (error.response?.data) {
+        if (error.response.data instanceof Blob) {
+          const text = await error.response.data.text()
+          try {
+            const errorData = JSON.parse(text)
+            errorMessage = errorData.detail || errorData.message || errorMessage
+          } catch {
+            errorMessage = 'PDF generation failed. Please check if the report data is valid.'
+          }
+        } else {
+          errorMessage = error.response.data.detail || error.response.data.message || errorMessage
+        }
+      }
+      alert(`Error: ${errorMessage}`)
     } finally {
       setDownloading(false)
     }
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
-    >
-      {/* Safety Score Card */}
-      <div className="glass-effect rounded-2xl p-8 shadow-xl border-glow relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-        <div className="flex items-center justify-between mb-6 relative z-10">
+    <div className="space-y-6">
+      <div className="card p-6 sm:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-white mb-2 text-glow">Security Analysis Results</h2>
-            <p className="text-gray-300">
-              Contract: <span className="font-mono text-sm text-white">{results.contract_address}</span>
-            </p>
-            <p className="text-gray-300">
-              Chain: <span className="font-semibold capitalize text-white">{results.chain}</span>
-            </p>
+            <h2 className="text-2xl font-bold text-gray-50 mb-3">Security Analysis Results</h2>
+            <div className="space-y-1 text-sm">
+              <p className="text-gray-400">
+                Contract: <span className="font-mono text-gray-300">{results.contract_address}</span>
+              </p>
+              <p className="text-gray-400">
+                Chain: <span className="font-medium text-gray-300 capitalize">{results.chain}</span>
+              </p>
+            </div>
           </div>
-          <div className={`${getScoreColor(results.safety_score)} rounded-2xl p-6 text-center min-w-[140px] border-glow pulse-glow relative overflow-hidden`}>
-            <div className="absolute inset-0 shimmer"></div>
-            <div className="flex items-center justify-center mb-2 relative z-10">
+          <div className={`${getScoreColor(results.safety_score)} rounded-xl p-6 text-center min-w-[140px] border`}>
+            <div className="flex items-center justify-center mb-2">
               {getScoreIcon(results.safety_score)}
             </div>
-            <div className="text-4xl font-bold mb-1 relative z-10 text-glow">{results.safety_score}</div>
-            <div className="text-sm font-medium relative z-10">Safety Score</div>
-            <div className="text-xs mt-2 opacity-75 relative z-10">{results.risk_level}</div>
+            <div className="text-4xl font-bold mb-1">{results.safety_score}</div>
+            <div className="text-sm font-medium opacity-90">Safety Score</div>
+            <div className="text-xs mt-2 opacity-75">{results.risk_level}</div>
           </div>
         </div>
 
-        {/* Download PDF Button */}
         <button
           onClick={handleDownloadPDF}
           disabled={downloading}
-          className="w-full bg-white text-black py-3 rounded-lg font-semibold hover:bg-gray-200 transition-all duration-300 shadow-lg disabled:opacity-50 flex items-center justify-center gap-2 border border-white/30 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] relative overflow-hidden group/btn"
+          className="btn-primary w-full"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000"></div>
           {downloading ? (
-            <>
-              <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin relative z-10" />
-              <span className="relative z-10">Generating PDF...</span>
-            </>
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-4 h-4 border-2 border-gray-950 border-t-transparent rounded-full animate-spin" />
+              <span>Generating PDF...</span>
+            </div>
           ) : (
-            <>
-              <Download className="w-5 h-5 relative z-10" />
-              <span className="relative z-10">Download PDF Report</span>
-            </>
+            <div className="flex items-center justify-center gap-2">
+              <Download className="w-4 h-4" />
+              <span>Download PDF Report</span>
+            </div>
           )}
         </button>
       </div>
 
-      {/* AI Explanation */}
-      <div className="glass-effect rounded-2xl p-6 shadow-xl border-glow card-hover">
+      {results.token_metrics && <TokenMetrics metrics={results.token_metrics} />}
+      {results.price_history && <PriceHistory history={results.price_history} />}
+      {results.wallet_analysis && <WalletAnalysis analysis={results.wallet_analysis} />}
+      {results.nft_analysis && <NFTAnalysis analysis={results.nft_analysis} />}
+
+      <div className="card p-6">
         <button
           onClick={() => toggleSection('explanation')}
-          className="w-full flex items-center justify-between text-left hover:scale-[1.01] transition-transform"
+          className="w-full flex items-center justify-between text-left"
         >
           <div className="flex items-center gap-3">
-            <Info className="w-6 h-6 text-white pulse-glow" />
-            <h3 className="text-xl font-semibold text-white">AI Risk Explanation</h3>
+            <Info className="w-5 h-5 text-gray-400" />
+            <h3 className="text-lg font-semibold text-gray-50">AI Risk Explanation</h3>
           </div>
           {expandedSections.explanation ? (
             <ChevronUp className="w-5 h-5 text-gray-400" />
@@ -154,32 +172,22 @@ function ResultsDisplay({ results }) {
             <ChevronDown className="w-5 h-5 text-gray-400" />
           )}
         </button>
-        <AnimatePresence>
-          {expandedSections.explanation && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden"
-            >
-              <div className="mt-4 p-4 bg-white/5 rounded-lg border border-white/10 backdrop-blur-sm">
-                <p className="text-gray-300 whitespace-pre-line">{results.ai_explanation}</p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {expandedSections.explanation && (
+          <div className="mt-4 p-4 bg-gray-900/50 rounded-lg border border-gray-800">
+            <p className="text-sm text-gray-300 whitespace-pre-line">{results.ai_explanation}</p>
+          </div>
+        )}
       </div>
 
-      {/* Vulnerabilities */}
       {results.vulnerabilities && results.vulnerabilities.length > 0 && (
-        <div className="glass-effect rounded-2xl p-6 shadow-xl border-glow card-hover">
+        <div className="card p-6">
           <button
             onClick={() => toggleSection('vulnerabilities')}
-            className="w-full flex items-center justify-between text-left mb-4 hover:scale-[1.01] transition-transform"
+            className="w-full flex items-center justify-between text-left mb-4"
           >
             <div className="flex items-center gap-3">
-              <AlertTriangle className="w-6 h-6 text-white pulse-glow" />
-              <h3 className="text-xl font-semibold text-white">
+              <AlertTriangle className="w-5 h-5 text-red-400" />
+              <h3 className="text-lg font-semibold text-gray-50">
                 Vulnerabilities ({results.vulnerabilities.length})
               </h3>
             </div>
@@ -189,49 +197,41 @@ function ResultsDisplay({ results }) {
               <ChevronDown className="w-5 h-5 text-gray-400" />
             )}
           </button>
-          <AnimatePresence>
-            {expandedSections.vulnerabilities && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="space-y-4"
-              >
-                {results.vulnerabilities.map((vuln, index) => (
-                  <div
-                    key={index}
-                    className="border border-white/10 rounded-lg p-4 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all duration-300 bg-white/5 backdrop-blur-sm hover:bg-white/10"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-semibold text-white">{vuln.type}</h4>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getSeverityColor(vuln.severity)}`}>
-                        {vuln.severity.toUpperCase()}
-                      </span>
-                    </div>
-                    <p className="text-gray-300 text-sm mb-2">{vuln.description}</p>
-                    {vuln.recommendation && (
-                      <p className="text-sm text-white mt-2">
-                        💡 <span className="font-medium">Recommendation:</span> {vuln.recommendation}
-                      </p>
-                    )}
+          {expandedSections.vulnerabilities && (
+            <div className="space-y-3">
+              {results.vulnerabilities.map((vuln, index) => (
+                <div
+                  key={index}
+                  className="p-4 bg-gray-900/50 rounded-lg border border-gray-800"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <h4 className="font-semibold text-gray-50">{vuln.type}</h4>
+                    <span className={`px-2.5 py-1 rounded-lg text-xs font-medium border ${getSeverityBadge(vuln.severity)}`}>
+                      {vuln.severity.toUpperCase()}
+                    </span>
                   </div>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  <p className="text-sm text-gray-400 mb-2">{vuln.description}</p>
+                  {vuln.recommendation && (
+                    <p className="text-sm text-gray-300 mt-2 pt-2 border-t border-gray-800">
+                      <span className="font-medium">Recommendation:</span> {vuln.recommendation}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Rug-Pull Indicators */}
       {results.rug_pull_indicators && results.rug_pull_indicators.length > 0 && (
-        <div className="glass-effect rounded-2xl p-6 shadow-xl border-glow card-hover">
+        <div className="card p-6">
           <button
             onClick={() => toggleSection('rugPull')}
-            className="w-full flex items-center justify-between text-left mb-4 hover:scale-[1.01] transition-transform"
+            className="w-full flex items-center justify-between text-left mb-4"
           >
             <div className="flex items-center gap-3">
-              <XCircle className="w-6 h-6 text-white pulse-glow" />
-              <h3 className="text-xl font-semibold text-white">
+              <XCircle className="w-5 h-5 text-red-400" />
+              <h3 className="text-lg font-semibold text-gray-50">
                 Rug-Pull Indicators ({results.rug_pull_indicators.length})
               </h3>
             </div>
@@ -241,50 +241,42 @@ function ResultsDisplay({ results }) {
               <ChevronDown className="w-5 h-5 text-gray-400" />
             )}
           </button>
-          <AnimatePresence>
-            {expandedSections.rugPull && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="space-y-4"
-              >
-                {results.rug_pull_indicators.map((indicator, index) => (
-                  <div
-                    key={index}
-                    className="border border-white/20 rounded-lg p-4 bg-white/10 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] transition-all duration-300 backdrop-blur-sm hover:bg-white/15"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-semibold text-white">{indicator.type}</h4>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getRiskColor(indicator.risk)}`}>
-                        {indicator.risk.toUpperCase()} RISK
-                      </span>
-                    </div>
-                    <p className="text-gray-300 text-sm mb-2">{indicator.description}</p>
-                    {indicator.recommendation && (
-                      <p className="text-sm text-white mt-2">
-                        ⚠️ <span className="font-medium">Warning:</span> {indicator.recommendation}
-                      </p>
-                    )}
+          {expandedSections.rugPull && (
+            <div className="space-y-3">
+              {results.rug_pull_indicators.map((indicator, index) => (
+                <div
+                  key={index}
+                  className="p-4 bg-gray-900/50 rounded-lg border border-gray-800"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <h4 className="font-semibold text-gray-50">{indicator.type}</h4>
+                    <span className={`px-2.5 py-1 rounded-lg text-xs font-medium border ${getRiskBadge(indicator.risk)}`}>
+                      {indicator.risk.toUpperCase()} RISK
+                    </span>
                   </div>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  <p className="text-sm text-gray-400 mb-2">{indicator.description}</p>
+                  {indicator.recommendation && (
+                    <p className="text-sm text-gray-300 mt-2 pt-2 border-t border-gray-800">
+                      <span className="font-medium">Warning:</span> {indicator.recommendation}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Recommendations */}
       {results.recommendations && results.recommendations.length > 0 && (
-        <div className="glass-effect rounded-2xl p-6 shadow-xl border-glow card-hover">
-          <h3 className="text-xl font-semibold mb-4 flex items-center gap-3 text-white">
-            <CheckCircle className="w-6 h-6 text-white pulse-glow" />
+        <div className="card p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-3 text-gray-50">
+            <CheckCircle className="w-5 h-5 text-green-400" />
             Recommendations
           </h3>
           <ul className="space-y-2">
             {results.recommendations.map((rec, index) => (
-              <li key={index} className="flex items-start gap-3 text-gray-300 hover:text-white transition-colors">
-                <span className="text-white font-bold">{index + 1}.</span>
+              <li key={index} className="flex items-start gap-3 text-sm text-gray-300">
+                <span className="text-gray-500 font-medium mt-0.5">{index + 1}.</span>
                 <span>{rec}</span>
               </li>
             ))}
@@ -292,34 +284,33 @@ function ResultsDisplay({ results }) {
         </div>
       )}
 
-      {/* Gas Optimizations */}
       {results.gas_optimizations && results.gas_optimizations.length > 0 && (
-        <div className="glass-effect rounded-2xl p-6 shadow-xl border-glow card-hover">
-          <h3 className="text-xl font-semibold mb-4 flex items-center gap-3 text-white">
-            <FileText className="w-6 h-6 text-white pulse-glow" />
+        <div className="card p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-3 text-gray-50">
+            <FileText className="w-5 h-5 text-blue-400" />
             Gas Optimization Opportunities ({results.gas_optimizations.length})
           </h3>
           <div className="space-y-3">
             {results.gas_optimizations.map((opt, index) => (
               <div
                 key={index}
-                className="border border-white/10 rounded-lg p-4 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all duration-300 bg-white/5 backdrop-blur-sm hover:bg-white/10"
+                className="p-4 bg-gray-900/50 rounded-lg border border-gray-800"
               >
                 <div className="flex items-start justify-between mb-2">
-                  <h4 className="font-semibold text-white">{opt.type}</h4>
-                  <span className="px-3 py-1 rounded-full text-xs font-medium border border-white/20 bg-white/10 text-white">
+                  <h4 className="font-semibold text-gray-50">{opt.type}</h4>
+                  <span className="px-2.5 py-1 rounded-lg text-xs font-medium border border-gray-700 bg-gray-800 text-gray-400">
                     {opt.severity?.toUpperCase() || 'INFO'}
                   </span>
                 </div>
-                <p className="text-gray-300 text-sm mb-2">{opt.description}</p>
+                <p className="text-sm text-gray-400 mb-2">{opt.description}</p>
                 {opt.recommendation && (
-                  <p className="text-sm text-white mt-2">
-                    💡 <span className="font-medium">Recommendation:</span> {opt.recommendation}
+                  <p className="text-sm text-gray-300 mt-2 pt-2 border-t border-gray-800">
+                    <span className="font-medium">Recommendation:</span> {opt.recommendation}
                   </p>
                 )}
                 {opt.estimated_savings && (
-                  <p className="text-sm text-gray-400 mt-1">
-                    💰 Estimated Savings: {opt.estimated_savings}
+                  <p className="text-xs text-gray-500 mt-2">
+                    Estimated Savings: {opt.estimated_savings}
                   </p>
                 )}
               </div>
@@ -328,20 +319,18 @@ function ResultsDisplay({ results }) {
         </div>
       )}
 
-      {/* No Issues Found */}
       {(!results.vulnerabilities || results.vulnerabilities.length === 0) &&
        (!results.rug_pull_indicators || results.rug_pull_indicators.length === 0) && (
-        <div className="glass-effect rounded-2xl p-8 shadow-xl text-center border-glow">
-          <CheckCircle className="w-16 h-16 text-white mx-auto mb-4 pulse-glow" />
-          <h3 className="text-2xl font-semibold text-white mb-2 text-glow">No Critical Issues Detected</h3>
-          <p className="text-gray-300">
+        <div className="card p-8 text-center">
+          <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-50 mb-2">No Critical Issues Detected</h3>
+          <p className="text-sm text-gray-400">
             However, always conduct your own research (DYOR) before investing.
           </p>
         </div>
       )}
-    </motion.div>
+    </div>
   )
 }
 
 export default ResultsDisplay
-

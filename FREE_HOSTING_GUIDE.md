@@ -601,3 +601,4 @@ curl https://your-backend.onrender.com/api/v1/health
 **Recommended Stack**: Render + Vercel + Supabase  
 **Total Monthly Cost**: $0
 
+

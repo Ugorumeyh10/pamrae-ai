@@ -19,6 +19,10 @@ from services.rule_engine import CustomRuleEngine
 from services.user_service import UserService
 from services.team_service import TeamService
 from services.payment_service import PaymentService
+from services.blockchain_data import BlockchainDataService
+from services.wallet_analysis import WalletAnalysisService
+from services.nft_analysis import NFTAnalysisService
+from services.market_insights import MarketInsightsService
 
 app = FastAPI(title="Pamrae AI - Smart Contract Security Scanner API", version="3.0.0")
 
@@ -49,6 +53,10 @@ rule_engine = CustomRuleEngine()
 user_service = UserService()
 team_service = TeamService()
 payment_service = PaymentService()
+blockchain_data_service = BlockchainDataService()
+wallet_analysis_service = WalletAnalysisService()
+nft_analysis_service = NFTAnalysisService()
+market_insights_service = MarketInsightsService()
 
 
 class ScanRequest(BaseModel):
@@ -71,6 +79,11 @@ class ScanResponse(BaseModel):
     timestamp: str
     recommendations: List[str]
     scan_id: Optional[str] = None
+    # New token metrics
+    token_metrics: Optional[dict] = None
+    price_history: Optional[dict] = None
+    wallet_analysis: Optional[dict] = None
+    nft_analysis: Optional[dict] = None
 
 
 @app.get("/")
@@ -79,14 +92,17 @@ async def root():
         "message": "Pamrae AI - Smart Contract Security Scanner API",
         "version": "3.0.0",
         "company": "Pamrae AI",
-        "founded": "December 2025",
-        "founders": ["Ugorume Henry", "Pamela Odunna"],
         "endpoints": {
             "scan": "/api/v1/scan",
             "upload": "/api/v1/upload",
             "report": "/api/v1/report",
             "auth": "/api/v1/auth/register",
-            "teams": "/api/v1/teams"
+            "teams": "/api/v1/teams",
+            "token_metrics": "/api/v1/token-metrics/{chain}/{address}",
+            "price_history": "/api/v1/price-history/{chain}/{address}",
+            "wallet_analysis": "/api/v1/wallet-analysis/{chain}/{address}",
+            "rug_pull_check": "/api/v1/rug-pull-check/{chain}/{address}",
+            "nft_analysis": "/api/v1/nft-analysis/{chain}/{address}"
         }
     }
 
@@ -145,6 +161,32 @@ async def scan_contract(
             except Exception as e:
                 print(f"Custom rule evaluation error: {e}")
         
+        # Fetch token metrics if it's a token contract
+        token_metrics = None
+        price_history = None
+        wallet_analysis = None
+        nft_analysis = None
+        
+        try:
+            if request.contract_type in ['token', None]:  # Try to detect token
+                token_metrics = await blockchain_data_service.get_token_metrics(
+                    request.contract_address,
+                    request.chain
+                )
+                price_history = await blockchain_data_service.get_price_history(
+                    request.contract_address,
+                    request.chain
+                )
+            
+            # NFT analysis if contract type is NFT
+            if request.contract_type == 'nft':
+                nft_analysis = await nft_analysis_service.analyze_nft_contract(
+                    request.contract_address,
+                    request.chain
+                )
+        except Exception as e:
+            print(f"Error fetching additional metrics: {e}")
+        
         # Generate AI explanation
         ai_explanation = await ai_explainer.explain_risks(scan_results)
         
@@ -176,7 +218,11 @@ async def scan_contract(
             ai_explanation=ai_explanation,
             timestamp=datetime.utcnow().isoformat(),
             recommendations=recommendations,
-            scan_id=scan_id
+            scan_id=scan_id,
+            token_metrics=token_metrics,
+            price_history=price_history,
+            wallet_analysis=wallet_analysis,
+            nft_analysis=nft_analysis
         )
         
         # Trigger webhooks
@@ -511,6 +557,40 @@ class UpdatePreferencesRequest(BaseModel):
     preferences: Dict
 
 
+@app.get("/api/v1/usage")
+async def get_usage(
+    x_api_key: Optional[str] = Depends(get_api_key)
+):
+    """
+    Get API usage statistics for the authenticated user
+    """
+    if not x_api_key:
+        raise HTTPException(status_code=401, detail="API key required")
+    
+    try:
+        user = user_service.get_user_by_api_key(x_api_key)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Get usage statistics from rate limiter
+        usage_stats = rate_limiter.get_usage_stats(x_api_key)
+        
+        return {
+            "tier": usage_stats.get('tier', 'free'),
+            "total_scans": usage_stats.get('total_scans', 0),
+            "daily_scans": usage_stats.get('daily_scans', 0),
+            "daily_limit": usage_stats.get('daily_limit', 10),
+            "hourly_scans": usage_stats.get('hourly_scans', 0),
+            "hourly_limit": usage_stats.get('hourly_limit', 3),
+            "batch_size_limit": usage_stats.get('batch_size_limit', 1),
+            "available_features": usage_stats.get('available_features', [])
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.put("/api/v1/user/preferences")
 async def update_preferences(
     request: UpdatePreferencesRequest,
@@ -763,6 +843,45 @@ async def create_payment(
         return payment
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/v1/market-insights")
+async def get_market_insights():
+    """
+    Get market insights and trading data
+    Public endpoint - no auth required
+    """
+    try:
+        insights = await market_insights_service.get_market_insights()
+        if 'error' in insights:
+            raise HTTPException(status_code=400, detail=insights['error'])
+        return insights
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/market-insights/top-gainers")
+async def get_top_gainers(limit: int = 10):
+    """
+    Get top gaining tokens
+    """
+    try:
+        gainers = await market_insights_service.get_top_gainers(limit)
+        return {"top_gainers": gainers}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/market-insights/top-losers")
+async def get_top_losers(limit: int = 10):
+    """
+    Get top losing tokens
+    """
+    try:
+        losers = await market_insights_service.get_top_losers(limit)
+        return {"top_losers": losers}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/v1/payments/{payment_id}/verify")

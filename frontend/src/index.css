@@ -2,142 +2,248 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
+/* Theme Variables */
+:root {
+  /* Light Theme */
+  --light-bg-primary: #ffffff;
+  --light-bg-secondary: #f8f9fa;
+  --light-bg-tertiary: #ffffff;
+  --light-text-primary: #000000;
+  --light-text-secondary: #374151;
+  --light-border: #e9ecef;
+  --light-card-bg: #ffffff;
+  --light-hover: #f1f3f5;
+  
+  /* Dark Theme (Default) */
+  --dark-bg-primary: #0d1117;
+  --dark-bg-secondary: #161b22;
+  --dark-bg-tertiary: #1c2128;
+  --dark-text-primary: #c9d1d9;
+  --dark-text-secondary: #8b949e;
+  --dark-border: #30363d;
+  --dark-card-bg: #161b22;
+  --dark-hover: #21262d;
+  
+  /* Dim Theme */
+  --dim-bg-primary: #1e2329;
+  --dim-bg-secondary: #2b3139;
+  --dim-bg-tertiary: #343a42;
+  --dim-text-primary: #d4d7dc;
+  --dim-text-secondary: #9ca3af;
+  --dim-border: #3d444d;
+  --dim-card-bg: #2b3139;
+  --dim-hover: #343a42;
+}
+
+/* Light Theme */
+.light-theme {
+  --bg-primary: var(--light-bg-primary);
+  --bg-secondary: var(--light-bg-secondary);
+  --bg-tertiary: var(--light-bg-tertiary);
+  --text-primary: var(--light-text-primary);
+  --text-secondary: var(--light-text-secondary);
+  --border: var(--light-border);
+  --card-bg: var(--light-card-bg);
+  --hover: var(--light-hover);
+}
+
+/* Dark Theme */
+.dark-theme {
+  --bg-primary: var(--dark-bg-primary);
+  --bg-secondary: var(--dark-bg-secondary);
+  --bg-tertiary: var(--dark-bg-tertiary);
+  --text-primary: var(--dark-text-primary);
+  --text-secondary: var(--dark-text-secondary);
+  --border: var(--dark-border);
+  --card-bg: var(--dark-card-bg);
+  --hover: var(--dark-hover);
+}
+
+/* Dim Theme */
+.dim-theme {
+  --bg-primary: var(--dim-bg-primary);
+  --bg-secondary: var(--dim-bg-secondary);
+  --bg-tertiary: var(--dim-bg-tertiary);
+  --text-primary: var(--dim-text-primary);
+  --text-secondary: var(--dim-text-secondary);
+  --border: var(--dim-border);
+  --card-bg: var(--dim-card-bg);
+  --hover: var(--dim-hover);
+}
+
+@layer base {
+  /* Default theme (dark) - applied before React loads */
+  html {
+    --bg-primary: var(--dark-bg-primary);
+    --bg-secondary: var(--dark-bg-secondary);
+    --bg-tertiary: var(--dark-bg-tertiary);
+    --text-primary: var(--dark-text-primary);
+    --text-secondary: var(--dark-text-secondary);
+    --border: var(--dark-border);
+    --card-bg: var(--dark-card-bg);
+    --hover: var(--dark-hover);
+  }
+  
+  * {
+    border-color: var(--border);
+  }
+  
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer components {
+  .card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    transition: all 0.2s ease;
+  }
+  
+  .card-hover {
+    transition: all 0.2s ease;
+  }
+  
+  .card-hover:hover {
+    border-color: var(--hover);
+    background-color: var(--hover);
+  }
+  
+  .btn-primary {
+    background-color: var(--text-primary);
+    color: var(--bg-primary);
+    padding: 0.625rem 1rem;
+    border-radius: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-primary:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+  
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .btn-secondary {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: 0.625rem 1rem;
+    border-radius: 0.75rem;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+  }
+  
+  .btn-secondary:hover:not(:disabled) {
+    background-color: var(--hover);
+    border-color: var(--hover);
+  }
+  
+  .btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+  }
+  
+  .input::placeholder {
+    color: var(--text-secondary);
+  }
+  
+  .input:focus {
+    outline: none;
+    border-color: var(--hover);
+    box-shadow: 0 0 0 2px rgba(var(--hover-rgb, 0), 0.1);
+  }
+  
+  .glass {
+    background-color: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+  }
+  
+  /* Theme Toggle Styles */
+  .theme-toggle-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+  }
+  
+  .theme-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    background-color: transparent;
+    border: none;
+    border-radius: 0.375rem;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .theme-btn:hover {
+    color: var(--text-primary);
+    background-color: var(--hover);
+  }
+  
+  .theme-btn.active {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
+  background-color: var(--bg-primary);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
+  background-color: var(--border);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background-color: var(--hover);
 }
-
-@layer base {
-  body {
-    @apply bg-black text-white min-h-screen;
-    background-image: 
-      radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
-      radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
-      radial-gradient(circle at 40% 20%, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
-    animation: backgroundShift 20s ease-in-out infinite;
-  }
-  
-  @keyframes backgroundShift {
-    0%, 100% { background-position: 0% 0%, 100% 100%, 50% 50%; }
-    50% { background-position: 10% 10%, 90% 90%, 60% 40%; }
-  }
-}
-
-@layer components {
-  .glass-effect {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
-    box-shadow: 
-      0 8px 32px 0 rgba(0, 0, 0, 0.37),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
-  }
-  
-  .gradient-text {
-    @apply bg-gradient-to-r from-white via-gray-200 to-white bg-clip-text text-transparent;
-    text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
-  }
-  
-  .gold-text {
-    background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
-  }
-  
-  .gold-glow {
-    box-shadow: 
-      0 0 20px rgba(255, 215, 0, 0.3),
-      0 0 40px rgba(255, 215, 0, 0.2),
-      inset 0 0 20px rgba(255, 215, 0, 0.1);
-  }
-  
-  .card-hover {
-    @apply transition-all duration-500 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)] hover:-translate-y-2 hover:scale-[1.02];
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .card-hover::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    transition: left 0.5s;
-  }
-  
-  .card-hover:hover::before {
-    left: 100%;
-  }
-  
-  .glow-effect {
-    box-shadow: 
-      0 0 20px rgba(255, 255, 255, 0.1),
-      0 0 40px rgba(255, 255, 255, 0.05),
-      inset 0 0 20px rgba(255, 255, 255, 0.05);
-  }
-  
-  .shimmer {
-    background: linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.1) 50%,
-      rgba(255, 255, 255, 0) 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 2s infinite;
-  }
-  
-  @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-  }
-  
-  .pulse-glow {
-    animation: pulseGlow 2s ease-in-out infinite;
-  }
-  
-  @keyframes pulseGlow {
-    0%, 100% {
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-    }
-    50% {
-      box-shadow: 0 0 40px rgba(255, 255, 255, 0.2);
-    }
-  }
-  
-  .border-glow {
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 
-      0 0 10px rgba(255, 255, 255, 0.1),
-      inset 0 0 10px rgba(255, 255, 255, 0.05);
-  }
-  
-  .text-glow {
-    text-shadow: 
-      0 0 10px rgba(255, 255, 255, 0.5),
-      0 0 20px rgba(255, 255, 255, 0.3),
-      0 0 30px rgba(255, 255, 255, 0.1);
-  }
-}
-

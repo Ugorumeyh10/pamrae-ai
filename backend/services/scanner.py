@@ -38,6 +38,27 @@ class ContractScanner:
             if not w3:
                 raise ValueError(f"Unsupported chain: {chain}")
             
+            # Validate and convert address to checksum format (required by Web3.py)
+            address = address.strip()
+            
+            # Basic format validation
+            if not address.startswith('0x'):
+                raise ValueError(f"Invalid address format: Address must start with '0x'. Received: {address}")
+            
+            if len(address) != 42:
+                raise ValueError(f"Invalid address format: Address must be 42 characters (received {len(address)}). Expected format: 0x followed by 40 hexadecimal characters. Received: {address}")
+            
+            # Validate hexadecimal characters
+            hex_part = address[2:]
+            if not all(c in '0123456789abcdefABCDEF' for c in hex_part):
+                raise ValueError(f"Invalid address format: Address contains invalid characters. Only hexadecimal characters (0-9, a-f, A-F) are allowed after '0x'. Received: {address}")
+            
+            # Convert to checksum format
+            try:
+                address = w3.to_checksum_address(address)
+            except Exception as e:
+                raise ValueError(f"Invalid address format: {str(e)}. Received: {address}")
+            
             bytecode = w3.eth.get_code(address)
             
             if bytecode == b'':
@@ -311,7 +332,8 @@ class ContractScanner:
     
     def _check_upgradeable(self, bytecode: bytes) -> bool:
         """Check if contract is upgradeable"""
-        return b'DELEGATECALL' in bytecode or b'PROXY' in bytecode.hex().upper()
+        hex_str = bytecode.hex().upper()
+        return b'DELEGATECALL' in bytecode or 'PROXY' in hex_str
     
     def _check_unbounded_loops(self, bytecode: bytes) -> bool:
         """Check for unbounded loops"""
@@ -324,15 +346,18 @@ class ContractScanner:
     
     def _check_hidden_minting(self, bytecode: bytes) -> bool:
         """Check for hidden minting functions"""
-        return b'MINT' in bytecode.hex().upper() or b'0x40c10f19' in bytecode
+        hex_str = bytecode.hex().upper()
+        return 'MINT' in hex_str or b'0x40c10f19' in bytecode or '40c10f19' in hex_str
     
     def _check_backdoor_withdrawals(self, bytecode: bytes) -> bool:
         """Check for backdoor withdrawal functions"""
-        return b'WITHDRAW' in bytecode.hex().upper() or b'DRAIN' in bytecode.hex().upper()
+        hex_str = bytecode.hex().upper()
+        return 'WITHDRAW' in hex_str or 'DRAIN' in hex_str
     
     def _check_anti_sell(self, bytecode: bytes) -> bool:
         """Check for anti-sell mechanisms"""
-        return b'BLACKLIST' in bytecode.hex().upper() or b'BAN' in bytecode.hex().upper()
+        hex_str = bytecode.hex().upper()
+        return 'BLACKLIST' in hex_str or 'BAN' in hex_str
     
     def _check_honeypot(self, bytecode: bytes) -> bool:
         """Check for honeypot patterns"""

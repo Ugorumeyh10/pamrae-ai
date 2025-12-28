@@ -47,16 +47,16 @@ function HistoryViewer({ contractAddress, chain }) {
 
   if (loading) {
     return (
-      <div className="glass-effect rounded-2xl p-6 border-glow">
-        <p className="text-gray-300">Loading history...</p>
+      <div className="card p-6">
+        <p className="text-gray-400">Loading history...</p>
       </div>
     )
   }
 
   if (!history || history.total_scans === 0) {
     return (
-      <div className="glass-effect rounded-2xl p-6 border-glow">
-        <p className="text-gray-300">No scan history available for this contract.</p>
+      <div className="card p-6">
+        <p className="text-gray-400">No scan history available for this contract.</p>
       </div>
     )
   }
@@ -72,34 +72,32 @@ function HistoryViewer({ contractAddress, chain }) {
 
   return (
     <div className="space-y-6">
-      {/* Trends Summary */}
       {trends && trends.trends && (
-        <div className="glass-effect rounded-2xl p-6 border-glow card-hover">
+        <div className="card p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold text-white flex items-center gap-2">
-              <BarChart3 className="w-6 h-6 text-white pulse-glow" />
+            <h3 className="text-lg font-semibold text-gray-50 flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-gray-400" />
               Security Trends ({days} days)
             </h3>
             <select
               value={days}
               onChange={(e) => setDays(Number(e.target.value))}
-              className="px-3 py-2 border border-white/20 rounded-lg bg-white/5 text-white text-sm"
+              className="input w-auto min-w-[120px]"
             >
-              <option value={7} className="bg-black">7 days</option>
-              <option value={30} className="bg-black">30 days</option>
-              <option value={90} className="bg-black">90 days</option>
+              <option value={7} className="bg-gray-900">7 days</option>
+              <option value={30} className="bg-gray-900">30 days</option>
+              <option value={90} className="bg-gray-900">90 days</option>
             </select>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-4">
-            {/* Safety Score Trend */}
-            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+          <div className="grid sm:grid-cols-3 gap-4">
+            <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-800">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-300 text-sm">Safety Score</span>
+                <span className="text-sm text-gray-400">Safety Score</span>
                 {getTrendIcon(trends.trends.safety_score.trend)}
               </div>
-              <div className="text-2xl font-bold text-white">{trends.trends.safety_score.current}</div>
-              <div className="text-xs text-gray-400 mt-1">
+              <div className="text-2xl font-bold text-gray-50">{trends.trends.safety_score.current}</div>
+              <div className="text-xs text-gray-500 mt-1">
                 Avg: {trends.trends.safety_score.average.toFixed(1)} | 
                 Range: {trends.trends.safety_score.min}-{trends.trends.safety_score.max}
               </div>
@@ -108,14 +106,13 @@ function HistoryViewer({ contractAddress, chain }) {
               </div>
             </div>
 
-            {/* Vulnerabilities Trend */}
-            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+            <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-800">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-300 text-sm">Vulnerabilities</span>
+                <span className="text-sm text-gray-400">Vulnerabilities</span>
                 {getTrendIcon(trends.trends.vulnerabilities.trend)}
               </div>
-              <div className="text-2xl font-bold text-white">{trends.trends.vulnerabilities.current}</div>
-              <div className="text-xs text-gray-400 mt-1">
+              <div className="text-2xl font-bold text-gray-50">{trends.trends.vulnerabilities.current}</div>
+              <div className="text-xs text-gray-500 mt-1">
                 Avg: {trends.trends.vulnerabilities.average.toFixed(1)}
               </div>
               <div className="text-xs text-gray-500 mt-1 capitalize">
@@ -123,14 +120,13 @@ function HistoryViewer({ contractAddress, chain }) {
               </div>
             </div>
 
-            {/* Rug Indicators Trend */}
-            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+            <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-800">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-300 text-sm">Rug Indicators</span>
+                <span className="text-sm text-gray-400">Rug Indicators</span>
                 {getTrendIcon(trends.trends.rug_indicators.trend)}
               </div>
-              <div className="text-2xl font-bold text-white">{trends.trends.rug_indicators.current}</div>
-              <div className="text-xs text-gray-400 mt-1">
+              <div className="text-2xl font-bold text-gray-50">{trends.trends.rug_indicators.current}</div>
+              <div className="text-xs text-gray-500 mt-1">
                 Avg: {trends.trends.rug_indicators.average.toFixed(1)}
               </div>
               <div className="text-xs text-gray-500 mt-1 capitalize">
@@ -141,10 +137,9 @@ function HistoryViewer({ contractAddress, chain }) {
         </div>
       )}
 
-      {/* Scan History */}
-      <div className="glass-effect rounded-2xl p-6 border-glow card-hover">
-        <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-          <Clock className="w-6 h-6 text-white pulse-glow" />
+      <div className="card p-6">
+        <h3 className="text-lg font-semibold text-gray-50 mb-4 flex items-center gap-2">
+          <Clock className="w-5 h-5 text-gray-400" />
           Scan History ({history.total_scans} scans)
         </h3>
         
@@ -152,20 +147,20 @@ function HistoryViewer({ contractAddress, chain }) {
           {history.history.slice().reverse().map((scan, index) => (
             <div
               key={index}
-              className="bg-white/5 rounded-lg p-4 border border-white/10 hover:bg-white/10 transition-all"
+              className="bg-gray-900/50 rounded-lg p-4 border border-gray-800 hover:bg-gray-900 transition-colors"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-white font-medium">
+                  <div className="text-gray-50 font-medium">
                     Score: {scan.safety_score}
                   </div>
-                  <div className="text-sm text-gray-400">
+                  <div className="text-sm text-gray-400 mt-1">
                     {new Date(scan.timestamp).toLocaleString()}
                   </div>
                 </div>
-                <div className="text-right text-sm text-gray-300">
-                  <div>Vulns: {scan.vulnerability_count}</div>
-                  <div>Rug: {scan.rug_pull_count}</div>
+                <div className="text-right text-sm text-gray-400">
+                  <div>Vulns: <span className="text-gray-300">{scan.vulnerability_count}</span></div>
+                  <div>Rug: <span className="text-gray-300">{scan.rug_pull_count}</span></div>
                 </div>
               </div>
             </div>
@@ -177,4 +172,3 @@ function HistoryViewer({ contractAddress, chain }) {
 }
 
 export default HistoryViewer
-

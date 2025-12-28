@@ -261,3 +261,4 @@ class WebhookService:
         with open(log_file, 'a') as f:
             f.write(json.dumps(log_entry) + '\n')
 
+

@@ -44,3 +44,4 @@ async function handleScan(address, chain) {
   return await response.json();
 }
 
+

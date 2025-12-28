@@ -177,3 +177,4 @@ class ContractMonitor:
         with open(file_path, 'w') as f:
             json.dump(history, f, indent=2)
 
+

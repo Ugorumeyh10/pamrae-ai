@@ -224,3 +224,4 @@ After frontend is deployed, update backend CORS:
 **Total Deployment Time**: ~15-20 minutes  
 **Cost**: $0/month (free tiers)
 
+

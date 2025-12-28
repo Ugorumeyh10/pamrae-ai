@@ -102,3 +102,4 @@ git push
 - **Environment variables**: Make sure they're set correctly
 - **Build errors**: Check logs in deployment dashboard
 
+

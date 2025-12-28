@@ -118,3 +118,4 @@ npm start
 
 Happy scanning! 🛡️
 
+

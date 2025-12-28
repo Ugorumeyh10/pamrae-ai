@@ -16,8 +16,8 @@ class RateLimiter:
         # Usage tiers
         self.tiers = {
             'free': {
-                'scans_per_day': 10,
-                'scans_per_hour': 3,
+                'scans_per_day': 500,  # Increased for testing
+                'scans_per_hour': 100,  # Increased for testing (was 3)
                 'batch_size': 1,
                 'features': ['basic_scan', 'pdf_report']
             },

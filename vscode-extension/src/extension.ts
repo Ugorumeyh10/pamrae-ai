@@ -116,3 +116,4 @@ function displayResults(result: any, document: vscode.TextEditor) {
 
 export function deactivate() {}
 
+

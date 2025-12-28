@@ -4,9 +4,9 @@ import axios from 'axios'
 import API_URL from '../config'
 
 function Pricing({ user, onPaymentSuccess }) {
-  const [billingCycle, setBillingCycle] = useState('monthly') // 'monthly' or 'annual'
-  const [selectedCurrency, setSelectedCurrency] = useState('USD') // 'NGN', 'USD', 'BTC'
-  const [processingPayment, setProcessingPayment] = useState(null) // plan being processed
+  const [billingCycle, setBillingCycle] = useState('monthly')
+  const [selectedCurrency, setSelectedCurrency] = useState('USD')
+  const [processingPayment, setProcessingPayment] = useState(null)
   const [paymentError, setPaymentError] = useState(null)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [paymentData, setPaymentData] = useState(null)
@@ -102,7 +102,7 @@ function Pricing({ user, onPaymentSuccess }) {
     if (plan.price === 0) return 'Free'
     if (plan.price === 'Custom') return 'Custom'
     const monthlyPrice = plan.price
-    const annualPrice = Math.round(monthlyPrice * 12 * 0.8) // 20% discount
+    const annualPrice = Math.round(monthlyPrice * 12 * 0.8)
     return billingCycle === 'monthly' ? `$${monthlyPrice}` : `$${Math.round(annualPrice / 12)}`
   }
 
@@ -116,9 +116,9 @@ function Pricing({ user, onPaymentSuccess }) {
     if (plan.price === 'Custom') return 'Custom'
     
     const exchangeRates = {
-      'NGN': 1500, // 1 USD = 1500 NGN
+      'NGN': 1500,
       'USD': 1,
-      'BTC': 0.000016 // Approximate BTC value
+      'BTC': 0.000016
     }
     
     const monthlyPrice = plan.price
@@ -136,13 +136,11 @@ function Pricing({ user, onPaymentSuccess }) {
 
   const handleSubscribe = async (plan) => {
     if (plan.price === 0) {
-      // Free plan - activate directly
       await handlePayment(plan.name.toLowerCase(), 'USD')
       return
     }
     
     if (plan.price === 'Custom') {
-      // Enterprise - show contact form
       alert('Please contact sales@pamrae.ai for enterprise pricing')
       return
     }
@@ -178,20 +176,16 @@ function Pricing({ user, onPaymentSuccess }) {
       )
       
       if (response.data.status === 'completed' || plan === 'free') {
-        // Payment completed or free plan
         alert(`Successfully activated ${plan} plan!`)
         if (onPaymentSuccess) {
           onPaymentSuccess(plan)
         }
         setShowPaymentModal(false)
       } else {
-        // Redirect to payment URL
         if (response.data.payment_url) {
           if (currency === 'BTC') {
-            // Show Bitcoin address
             alert(`Please send ${response.data.amount} ${currency} to:\n${response.data.payment_url}\n\nPayment ID: ${response.data.payment_id}`)
           } else {
-            // Open payment gateway
             window.open(response.data.payment_url, '_blank')
             alert('Please complete payment in the new window. Your plan will be activated automatically.')
           }
@@ -204,14 +198,12 @@ function Pricing({ user, onPaymentSuccess }) {
       if (error.response?.data) {
         const data = error.response.data
         
-        // Handle rate limit errors specifically
         if (data.error === 'Rate limit exceeded' || data.error?.includes('Rate limit')) {
           const resetTime = data.reset_time ? new Date(data.reset_time).toLocaleTimeString() : 'soon'
           const tier = data.tier || 'free'
           const reason = data.reason || 'You\'ve reached your hourly limit'
           errorMessage = `⏱️ Rate limit exceeded (${tier} tier)\n\n${reason}\n\nLimit resets at: ${resetTime}\n\n💡 Upgrade your plan for higher limits!`
         }
-        // Handle other error formats
         else if (typeof data.detail === 'string') {
           errorMessage = data.detail
         } else if (typeof data.detail === 'object') {
@@ -234,52 +226,49 @@ function Pricing({ user, onPaymentSuccess }) {
   }
 
   return (
-    <div className="min-h-screen py-8 md:py-16">
-      <div className="container mx-auto px-4">
-        {/* Header */}
+    <div className="min-h-screen py-12 lg:py-16">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-white mb-4 text-glow">Choose Your Plan</h2>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-50 mb-4">Choose Your Plan</h2>
+          <p className="text-lg text-gray-400 max-w-2xl mx-auto">
             Select the perfect plan for your security scanning needs
           </p>
         </div>
 
-        {/* Billing Toggle */}
-        <div className="flex flex-col items-center gap-4 mb-12">
-          <div className="glass-effect rounded-lg p-1 border-glow inline-flex">
+        <div className="flex flex-col items-center gap-6 mb-12">
+          <div className="flex bg-gray-900 border border-gray-800 rounded-lg p-1">
             <button
               onClick={() => setBillingCycle('monthly')}
-              className={`px-6 py-2 rounded-md font-medium transition-all ${
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                 billingCycle === 'monthly'
-                  ? 'bg-white text-black'
-                  : 'text-gray-300 hover:text-white'
+                  ? 'bg-white text-gray-950'
+                  : 'text-gray-400 hover:text-gray-300'
               }`}
             >
               Monthly
             </button>
             <button
               onClick={() => setBillingCycle('annual')}
-              className={`px-6 py-2 rounded-md font-medium transition-all relative ${
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors relative ${
                 billingCycle === 'annual'
-                  ? 'bg-white text-black'
-                  : 'text-gray-300 hover:text-white'
+                  ? 'bg-white text-gray-950'
+                  : 'text-gray-400 hover:text-gray-300'
               }`}
             >
               Annual
-              <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
+              <span className="absolute -top-1.5 -right-1.5 bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-full">
                 Save 20%
               </span>
             </button>
           </div>
           
-          {/* Currency Selector */}
-          <div className="glass-effect rounded-lg p-1 border-glow inline-flex gap-1">
+          <div className="flex bg-gray-900 border border-gray-800 rounded-lg p-1 gap-1">
             <button
               onClick={() => setSelectedCurrency('NGN')}
-              className={`px-4 py-2 rounded-md font-medium transition-all flex items-center gap-2 ${
+              className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
                 selectedCurrency === 'NGN'
-                  ? 'bg-white text-black'
-                  : 'text-gray-300 hover:text-white'
+                  ? 'bg-white text-gray-950'
+                  : 'text-gray-400 hover:text-gray-300'
               }`}
             >
               <Coins className="w-4 h-4" />
@@ -287,10 +276,10 @@ function Pricing({ user, onPaymentSuccess }) {
             </button>
             <button
               onClick={() => setSelectedCurrency('USD')}
-              className={`px-4 py-2 rounded-md font-medium transition-all flex items-center gap-2 ${
+              className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
                 selectedCurrency === 'USD'
-                  ? 'bg-white text-black'
-                  : 'text-gray-300 hover:text-white'
+                  ? 'bg-white text-gray-950'
+                  : 'text-gray-400 hover:text-gray-300'
               }`}
             >
               <DollarSign className="w-4 h-4" />
@@ -298,10 +287,10 @@ function Pricing({ user, onPaymentSuccess }) {
             </button>
             <button
               onClick={() => setSelectedCurrency('BTC')}
-              className={`px-4 py-2 rounded-md font-medium transition-all flex items-center gap-2 ${
+              className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
                 selectedCurrency === 'BTC'
-                  ? 'bg-white text-black'
-                  : 'text-gray-300 hover:text-white'
+                  ? 'bg-white text-gray-950'
+                  : 'text-gray-400 hover:text-gray-300'
               }`}
             >
               <CreditCard className="w-4 h-4" />
@@ -310,8 +299,7 @@ function Pricing({ user, onPaymentSuccess }) {
           </div>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-7xl mx-auto">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 max-w-7xl mx-auto mb-12">
           {plans.map((plan, index) => {
             const Icon = plan.icon
             const isPopular = plan.popular
@@ -319,33 +307,30 @@ function Pricing({ user, onPaymentSuccess }) {
             return (
               <div
                 key={index}
-                className={`glass-effect rounded-2xl p-8 border-glow card-hover relative ${
-                  isPopular ? 'ring-2' : ''
-                }`}
-                style={isPopular ? {borderColor: '#FFD700', ringColor: '#FFD700'} : {}}
+                className={`card p-6 ${isPopular ? 'ring-2 ring-yellow-500/50' : ''}`}
               >
                 {isPopular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-4 py-1 rounded-full text-sm font-bold">
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-gray-950 px-3 py-1 rounded-full text-xs font-bold">
                     Most Popular
                   </div>
                 )}
 
                 <div className="text-center mb-6">
-                  <div className={`w-16 h-16 mx-auto mb-4 rounded-xl flex items-center justify-center ${
-                    plan.color === 'gold' ? 'bg-gradient-to-br from-yellow-400 to-yellow-600' :
+                  <div className={`w-12 h-12 mx-auto mb-4 rounded-xl flex items-center justify-center ${
+                    plan.color === 'gold' ? 'bg-yellow-500/20 border border-yellow-500/50' :
                     plan.color === 'blue' ? 'bg-blue-500/20 border border-blue-500/50' :
                     plan.color === 'purple' ? 'bg-purple-500/20 border border-purple-500/50' :
-                    'bg-white/10 border border-white/20'
+                    'bg-gray-800 border border-gray-700'
                   }`}>
-                    <Icon className={`w-8 h-8 ${
-                      plan.color === 'gold' ? 'text-black' : 'text-white'
+                    <Icon className={`w-6 h-6 ${
+                      plan.color === 'gold' ? 'text-yellow-400' : 'text-gray-400'
                     }`} />
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
+                  <h3 className="text-xl font-bold text-gray-50 mb-2">{plan.name}</h3>
                   <div className="mb-2">
-                    <span className="text-4xl font-bold text-white">{getPriceInCurrency(plan)}</span>
+                    <span className="text-3xl font-bold text-gray-50">{getPriceInCurrency(plan)}</span>
                     {plan.price !== 0 && plan.price !== 'Custom' && (
-                      <span className="text-gray-400">/{billingCycle === 'monthly' ? 'mo' : 'mo'}</span>
+                      <span className="text-gray-500 text-sm">/{billingCycle === 'monthly' ? 'mo' : 'mo'}</span>
                     )}
                   </div>
                   {billingCycle === 'annual' && plan.price !== 0 && plan.price !== 'Custom' && (
@@ -357,15 +342,15 @@ function Pricing({ user, onPaymentSuccess }) {
                   {plan.features.map((feature, idx) => (
                     <li key={idx} className="flex items-start gap-2">
                       <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-300 text-sm">{feature}</span>
+                      <span className="text-sm text-gray-300">{feature}</span>
                     </li>
                   ))}
                   {plan.limitations.length > 0 && (
                     <>
                       {plan.limitations.map((limitation, idx) => (
                         <li key={idx} className="flex items-start gap-2 opacity-50">
-                          <span className="w-5 h-5 flex-shrink-0 mt-0.5 text-center text-xs">✗</span>
-                          <span className="text-gray-400 text-sm line-through">{limitation}</span>
+                          <span className="w-5 h-5 flex-shrink-0 mt-0.5 text-center text-xs text-gray-500">✗</span>
+                          <span className="text-sm text-gray-500 line-through">{limitation}</span>
                         </li>
                       ))}
                     </>
@@ -375,17 +360,17 @@ function Pricing({ user, onPaymentSuccess }) {
                 <button
                   onClick={() => handleSubscribe(plan)}
                   disabled={processingPayment === plan.name.toLowerCase()}
-                  className={`w-full py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
+                  className={`w-full py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
                     isPopular
-                      ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-black hover:from-yellow-500 hover:to-yellow-700'
+                      ? 'bg-yellow-500 text-gray-950 hover:bg-yellow-400'
                       : plan.price === 0
-                      ? 'bg-white/10 text-white border border-white/20 hover:bg-white/20'
-                      : 'bg-white text-black hover:bg-gray-200'
-                  } hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed`}
+                      ? 'bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700'
+                      : 'btn-primary'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {processingPayment === plan.name.toLowerCase() ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin" />
                       Processing...
                     </>
                   ) : (
@@ -399,38 +384,36 @@ function Pricing({ user, onPaymentSuccess }) {
           })}
         </div>
 
-        {/* Payment Error */}
         {paymentError && (
-          <div className="mt-6 glass-effect rounded-lg p-4 border border-red-500/50 max-w-4xl mx-auto">
-            <p className="text-red-400 text-sm">{paymentError}</p>
+          <div className="card p-4 border-red-500/20 bg-red-500/5 max-w-4xl mx-auto">
+            <p className="text-sm text-red-400">{paymentError}</p>
           </div>
         )}
 
-        {/* Payment Modal */}
         {showPaymentModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="glass-effect rounded-2xl p-8 border-glow max-w-md w-full">
-              <h3 className="text-2xl font-bold text-white mb-4">Complete Payment</h3>
-              <p className="text-gray-300 mb-6">Choose your payment method:</p>
+          <div className="fixed inset-0 bg-gray-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="card p-6 max-w-md w-full">
+              <h3 className="text-xl font-bold text-gray-50 mb-4">Complete Payment</h3>
+              <p className="text-sm text-gray-400 mb-6">Choose your payment method:</p>
               
-              <div className="space-y-3 mb-6">
+              <div className="space-y-2 mb-6">
                 <button
                   onClick={() => handlePayment(paymentData.plan, 'NGN')}
-                  className="w-full py-3 px-4 bg-white/10 border border-white/20 rounded-lg text-white hover:bg-white/20 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3 px-4 bg-gray-900 border border-gray-800 rounded-lg text-gray-300 hover:bg-gray-800 hover:border-gray-700 transition-colors flex items-center justify-center gap-2"
                 >
                   <Coins className="w-5 h-5" />
                   Pay with NGN (Paystack/Flutterwave)
                 </button>
                 <button
                   onClick={() => handlePayment(paymentData.plan, 'USD')}
-                  className="w-full py-3 px-4 bg-white/10 border border-white/20 rounded-lg text-white hover:bg-white/20 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3 px-4 bg-gray-900 border border-gray-800 rounded-lg text-gray-300 hover:bg-gray-800 hover:border-gray-700 transition-colors flex items-center justify-center gap-2"
                 >
                   <DollarSign className="w-5 h-5" />
                   Pay with USD (Stripe)
                 </button>
                 <button
                   onClick={() => handlePayment(paymentData.plan, 'BTC')}
-                  className="w-full py-3 px-4 bg-white/10 border border-white/20 rounded-lg text-white hover:bg-white/20 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3 px-4 bg-gray-900 border border-gray-800 rounded-lg text-gray-300 hover:bg-gray-800 hover:border-gray-700 transition-colors flex items-center justify-center gap-2"
                 >
                   <CreditCard className="w-5 h-5" />
                   Pay with Bitcoin
@@ -442,7 +425,7 @@ function Pricing({ user, onPaymentSuccess }) {
                   setShowPaymentModal(false)
                   setPaymentError(null)
                 }}
-                className="w-full py-2 px-4 bg-white/5 border border-white/20 rounded-lg text-gray-300 hover:text-white transition-all"
+                className="w-full py-2.5 px-4 bg-gray-900 border border-gray-800 rounded-lg text-gray-400 hover:text-gray-300 hover:bg-gray-800 transition-colors"
               >
                 Cancel
               </button>
@@ -450,25 +433,24 @@ function Pricing({ user, onPaymentSuccess }) {
           </div>
         )}
 
-        {/* FAQ Section */}
-        <div className="mt-16 glass-effect rounded-2xl p-8 border-glow max-w-4xl mx-auto">
-          <h3 className="text-2xl font-bold text-white mb-6 text-center">Frequently Asked Questions</h3>
+        <div className="card p-8 max-w-4xl mx-auto">
+          <h3 className="text-xl font-bold text-gray-50 mb-6 text-center">Frequently Asked Questions</h3>
           <div className="space-y-4">
             <div>
-              <h4 className="text-white font-semibold mb-2">Can I change plans later?</h4>
-              <p className="text-gray-300 text-sm">Yes, you can upgrade or downgrade your plan at any time.</p>
+              <h4 className="text-gray-200 font-semibold mb-2">Can I change plans later?</h4>
+              <p className="text-sm text-gray-400">Yes, you can upgrade or downgrade your plan at any time.</p>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-2">What payment methods do you accept?</h4>
-              <p className="text-gray-300 text-sm">We accept NGN (Paystack/Flutterwave), USD (Stripe), and Bitcoin payments.</p>
+              <h4 className="text-gray-200 font-semibold mb-2">What payment methods do you accept?</h4>
+              <p className="text-sm text-gray-400">We accept NGN (Paystack/Flutterwave), USD (Stripe), and Bitcoin payments.</p>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-2">Is there a free trial?</h4>
-              <p className="text-gray-300 text-sm">Yes, all paid plans come with a 14-day free trial. No credit card required.</p>
+              <h4 className="text-gray-200 font-semibold mb-2">Is there a free trial?</h4>
+              <p className="text-sm text-gray-400">Yes, all paid plans come with a 14-day free trial. No credit card required.</p>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-2">Do you offer refunds?</h4>
-              <p className="text-gray-300 text-sm">Yes, we offer a 30-day money-back guarantee on all paid plans.</p>
+              <h4 className="text-gray-200 font-semibold mb-2">Do you offer refunds?</h4>
+              <p className="text-sm text-gray-400">Yes, we offer a 30-day money-back guarantee on all paid plans.</p>
             </div>
           </div>
         </div>
@@ -478,4 +460,3 @@ function Pricing({ user, onPaymentSuccess }) {
 }
 
 export default Pricing
-

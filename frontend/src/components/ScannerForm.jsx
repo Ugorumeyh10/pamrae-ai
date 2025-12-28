@@ -1,15 +1,18 @@
 import { useState } from 'react'
-import { Upload, Search, Loader2, FileText } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { Upload, Search, Loader2, FileText, AlertTriangle, X } from 'lucide-react'
 import axios from 'axios'
 import API_URL from '../config'
+import ChainSelector from './ChainSelector'
 
-function ScannerForm({ onScan, loading }) {
-  const [mode, setMode] = useState('address') // 'address' or 'upload'
+function ScannerForm({ onScan, loading: externalLoading }) {
+  const [internalLoading, setInternalLoading] = useState(false)
+  const loading = externalLoading || internalLoading
+  const [mode, setMode] = useState('address')
   const [address, setAddress] = useState('')
   const [chain, setChain] = useState('ethereum')
   const [file, setFile] = useState(null)
   const [fileName, setFileName] = useState('')
+  const [error, setError] = useState(null)
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0]
@@ -21,23 +24,43 @@ function ScannerForm({ onScan, loading }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setError(null)
     
+    // Validate address format
+    if (mode === 'address') {
+      const trimmedAddress = address.trim()
+      if (!trimmedAddress) {
+        setError('Please enter a contract address')
+        return
+      }
+      
+      // Basic address validation
+      if (!/^0x[a-fA-F0-9]{40}$/.test(trimmedAddress)) {
+        if (trimmedAddress.length < 42) {
+          setError(`Invalid address format: Address is too short (${trimmedAddress.length} characters, expected 42). Please check the address.`)
+        } else if (trimmedAddress.length > 42) {
+          setError(`Invalid address format: Address is too long (${trimmedAddress.length} characters, expected 42). Please check the address.`)
+        } else if (!trimmedAddress.startsWith('0x')) {
+          setError('Invalid address format: Address must start with "0x"')
+        } else {
+          setError('Invalid address format: Address must be 42 characters (0x + 40 hex characters). Please check the address.')
+        }
+        return
+      }
+    }
+    
+    setInternalLoading(true)
     try {
       let response
       
       if (mode === 'address') {
-        if (!address.trim()) {
-          alert('Please enter a contract address')
-          return
-        }
-        
         response = await axios.post(`${API_URL}/api/v1/scan`, {
           contract_address: address.trim(),
           chain: chain
         })
       } else {
         if (!file) {
-          alert('Please upload a Solidity file')
+          setError('Please upload a Solidity file')
           return
         }
         
@@ -60,16 +83,18 @@ function ScannerForm({ onScan, loading }) {
       if (error.response?.data) {
         const data = error.response.data
         
-        // Handle rate limit errors specifically
         if (data.error === 'Rate limit exceeded' || data.error?.includes('Rate limit')) {
           const resetTime = data.reset_time ? new Date(data.reset_time).toLocaleTimeString() : 'soon'
           const tier = data.tier || 'free'
           const reason = data.reason || 'You\'ve reached your hourly limit'
-          errorMessage = `⏱️ Rate limit exceeded (${tier} tier)\n\n${reason}\n\nLimit resets at: ${resetTime}\n\n💡 Upgrade your plan for higher limits!`
+          errorMessage = `Rate limit exceeded (${tier} tier). ${reason} Limit resets at: ${resetTime}. Upgrade your plan for higher limits!`
         }
-        // Handle other error formats
         else if (typeof data.detail === 'string') {
           errorMessage = data.detail
+          // Clean up "Scan failed: " prefix if present
+          if (errorMessage.startsWith('Scan failed: ')) {
+            errorMessage = errorMessage.replace('Scan failed: ', '')
+          }
         } else if (typeof data.detail === 'object') {
           errorMessage = JSON.stringify(data.detail)
         } else if (typeof data.message === 'string') {
@@ -83,71 +108,86 @@ function ScannerForm({ onScan, loading }) {
         errorMessage = error.message
       }
       
-      alert(errorMessage)
+      setError(errorMessage)
+    } finally {
+      setInternalLoading(false)
     }
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="glass-effect rounded-2xl p-4 md:p-8 shadow-2xl border-glow relative overflow-hidden group"
-    >
-      <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-      <div className="flex gap-4 mb-6 relative z-10">
+    <div className="card p-6 sm:p-8">
+      <div className="flex gap-2 mb-6">
         <button
           onClick={() => setMode('address')}
-          className={`flex-1 py-3 px-6 rounded-lg font-medium transition-all duration-300 relative overflow-hidden ${
+          className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${
             mode === 'address'
-              ? 'bg-white text-black shadow-lg scale-105 border border-white/30'
-              : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10 hover:border-white/20'
+              ? 'bg-white text-gray-950'
+              : 'bg-gray-900 text-gray-400 border border-gray-800 hover:bg-gray-800 hover:text-gray-300'
           }`}
         >
-          {mode === 'address' && <div className="absolute inset-0 shimmer"></div>}
-          <div className="flex items-center justify-center gap-2 relative z-10">
-            <Search className="w-5 h-5" />
+          <div className="flex items-center justify-center gap-2">
+            <Search className="w-4 h-4" />
             Scan by Address
           </div>
         </button>
         <button
           onClick={() => setMode('upload')}
-          className={`flex-1 py-3 px-6 rounded-lg font-medium transition-all duration-300 relative overflow-hidden ${
+          className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${
             mode === 'upload'
-              ? 'bg-white text-black shadow-lg scale-105 border border-white/30'
-              : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10 hover:border-white/20'
+              ? 'bg-white text-gray-950'
+              : 'bg-gray-900 text-gray-400 border border-gray-800 hover:bg-gray-800 hover:text-gray-300'
           }`}
         >
-          {mode === 'upload' && <div className="absolute inset-0 shimmer"></div>}
-          <div className="flex items-center justify-center gap-2 relative z-10">
-            <Upload className="w-5 h-5" />
-            Upload Solidity Code
+          <div className="flex items-center justify-center gap-2">
+            <Upload className="w-4 h-4" />
+            Upload Code
           </div>
         </button>
       </div>
 
+      {error && (
+        <div className="card p-4 border-red-500/50 bg-red-500/10 mb-6 animate-in fade-in duration-200">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-red-400 mb-1">Error</h3>
+              <p className="text-sm text-red-300 break-words">{error}</p>
+              {error.includes('Invalid address format') && (
+                <div className="mt-2 text-xs text-red-400/80">
+                  <p>💡 Tip: Ethereum addresses should be:</p>
+                  <ul className="list-disc list-inside mt-1 space-y-0.5">
+                    <li>42 characters long (including "0x")</li>
+                    <li>Start with "0x"</li>
+                    <li>Contain only hexadecimal characters (0-9, a-f, A-F)</li>
+                  </ul>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-400 hover:text-red-300 transition-colors flex-shrink-0"
+              aria-label="Close error"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Chain Selection */}
-        <div className="relative z-10">
-          <label className="block text-sm font-medium text-white mb-2">
+        <div>
+          <label className="block text-sm font-medium text-gray-200 mb-2">
             Blockchain Network
           </label>
-          <select
+          <ChainSelector
             value={chain}
-            onChange={(e) => setChain(e.target.value)}
-            className="w-full px-4 py-3 border border-white/20 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/40 bg-white/5 text-white backdrop-blur-sm transition-all duration-300 hover:bg-white/10"
-          >
-            <option value="ethereum" className="bg-black text-white">Ethereum</option>
-            <option value="base" className="bg-black text-white">Base</option>
-            <option value="polygon" className="bg-black text-white">Polygon</option>
-            <option value="solana" className="bg-black text-white">Solana</option>
-          </select>
+            onChange={setChain}
+          />
         </div>
 
-        {/* Address Input */}
         {mode === 'address' && (
-          <div className="relative z-10">
-            <label className="block text-sm font-medium text-white mb-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-200 mb-2">
               Contract Address
             </label>
             <input
@@ -155,21 +195,20 @@ function ScannerForm({ onScan, loading }) {
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="0x..."
-              className="w-full px-4 py-3 border border-white/20 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/40 bg-white/5 text-white font-mono backdrop-blur-sm transition-all duration-300 hover:bg-white/10 placeholder:text-gray-500"
+              className="input font-mono"
             />
-            <p className="mt-2 text-sm text-gray-400">
+            <p className="mt-2 text-xs text-gray-500">
               Enter the smart contract address you want to analyze
             </p>
           </div>
         )}
 
-        {/* File Upload */}
         {mode === 'upload' && (
-          <div className="relative z-10">
-            <label className="block text-sm font-medium text-white mb-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-200 mb-2">
               Solidity Source Code
             </label>
-            <div className="border-2 border-dashed border-white/20 rounded-lg p-6 text-center hover:border-white/40 transition-all duration-300 bg-white/5 backdrop-blur-sm group/upload">
+            <div className="border-2 border-dashed border-gray-800 rounded-xl p-8 text-center hover:border-gray-700 transition-colors bg-gray-900/30">
               <input
                 type="file"
                 id="file-upload"
@@ -179,17 +218,17 @@ function ScannerForm({ onScan, loading }) {
               />
               <label htmlFor="file-upload" className="cursor-pointer">
                 {fileName ? (
-                  <div className="flex items-center justify-center gap-2 text-white">
+                  <div className="flex items-center justify-center gap-2 text-gray-300">
                     <FileText className="w-5 h-5" />
-                    <span className="font-medium">{fileName}</span>
+                    <span className="text-sm font-medium">{fileName}</span>
                   </div>
                 ) : (
                   <div>
-                    <Upload className="w-12 h-12 text-gray-400 mx-auto mb-2 group-hover/upload:text-white transition-colors" />
-                    <p className="text-gray-300">
+                    <Upload className="w-10 h-10 text-gray-500 mx-auto mb-3" />
+                    <p className="text-sm text-gray-400">
                       Click to upload or drag and drop
                     </p>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 mt-1">
                       .sol or .txt files only
                     </p>
                   </div>
@@ -199,29 +238,45 @@ function ScannerForm({ onScan, loading }) {
           </div>
         )}
 
-        {/* Submit Button */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-white text-black py-4 rounded-lg font-semibold text-lg hover:bg-gray-200 transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 relative overflow-hidden group/btn border border-white/30 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,255,255,0.3)]"
+          className="btn-primary w-full py-3 text-base min-h-[48px] flex items-center justify-center"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000"></div>
           {loading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin relative z-10" />
-              <span className="relative z-10">Scanning...</span>
-            </>
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>Scanning contract...</span>
+            </div>
           ) : (
-            <>
-              <Search className="w-5 h-5 relative z-10" />
-              <span className="relative z-10">Scan Contract</span>
-            </>
+            <div className="flex items-center justify-center gap-2">
+              <Search className="w-5 h-5" />
+              <span>Scan Contract</span>
+            </div>
           )}
         </button>
+        
+        {loading && (
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center justify-between text-xs" style={{ color: 'var(--text-secondary)' }}>
+              <span>Analyzing contract security...</span>
+              <span className="animate-pulse">⏳</span>
+            </div>
+            <div className="w-full rounded-full h-1.5 overflow-hidden" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+              <div 
+                className="h-full rounded-full animate-pulse" 
+                style={{ 
+                  backgroundColor: 'var(--text-primary)',
+                  width: '100%',
+                  animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                }}
+              ></div>
+            </div>
+          </div>
+        )}
       </form>
-    </motion.div>
+    </div>
   )
 }
 
 export default ScannerForm
-

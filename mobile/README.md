@@ -69,3 +69,4 @@ eas build --platform ios
 eas build --platform android
 ```
 
+

@@ -327,3 +327,4 @@ class SecurityMLModel:
             'model_path': str(self.model_path)
         }
 
+

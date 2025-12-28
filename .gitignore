@@ -76,3 +76,5 @@ htmlcov/
 *.tmp
 *.temp
 .cache/
+.env
+backend/.env
